@@ -7,4 +7,6 @@ pipeline/data/ft_version_log.json
 pycache/
 *.pyc
 .DS_Store
+sidecar/db/edit_log.db*
+pipeline/data/*.mbox
 chroma_db/
