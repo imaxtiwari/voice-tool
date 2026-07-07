@@ -22,13 +22,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-# Add CORS middleware with regex for localhost and chrome extension origins
+# Add CORS middleware with regex for localhost, chrome extension, and Gmail origins
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    allow_origin_regex=r"^(https?://localhost(:\d+)?|chrome-extension://.*)$",
+    allow_origin_regex=r"^(https?://localhost(:\d+)?|chrome-extension://.*|https://mail\.google\.com)$",
 )
 
 # Register routes
