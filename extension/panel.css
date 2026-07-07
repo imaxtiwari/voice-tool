@@ -1,1 +1,294 @@
-/* panel.css - Sidebar panel styling */
+/* Scoped rules for Voice Tool panel */
+
+.vt-panel {
+  box-sizing: border-box;
+  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #ffffff;
+  border-top: 1px solid #e0e0e0;
+  padding: 12px 16px;
+  max-width: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
+  transition: all 0.3s ease;
+}
+
+/* Header & mode toggles */
+.vt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vt-mode-toggle {
+  display: flex;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.vt-mode-btn {
+  background: none;
+  border: none;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4b5563;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.vt-mode-btn.vt-active {
+  background-color: #ffffff;
+  color: #1e1b4b;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.vt-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+/* Sliders */
+.vt-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vt-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vt-slider-label {
+  font-size: 13px;
+  color: #374151;
+  font-weight: 500;
+  width: 50px;
+  flex-shrink: 0;
+}
+
+.vt-slider {
+  flex-grow: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: #e5e7eb;
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.vt-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #4f46e5;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.vt-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.vt-slider-val {
+  font-size: 12px;
+  color: #6b7280;
+  width: 24px;
+  text-align: right;
+  font-weight: 500;
+}
+
+/* Buttons */
+.vt-rewrite-btn {
+  background-color: #4f46e5;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+  text-align: center;
+}
+
+.vt-rewrite-btn:hover:not(:disabled) {
+  background-color: #4338ca;
+  box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);
+}
+
+.vt-rewrite-btn:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Diff View */
+.vt-diff-view {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Custom Scrollbar for Diff View */
+.vt-diff-view::-webkit-scrollbar {
+  width: 4px;
+}
+.vt-diff-view::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 2px;
+}
+
+.vt-diff-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.vt-diff-item.vt-fact-flagged {
+  border-left: 3px solid #f59e0b;
+}
+
+.vt-fact-icon {
+  color: #f59e0b;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.vt-diff-content {
+  flex-grow: 1;
+  color: #1f2937;
+  word-break: break-word;
+}
+
+.vt-del {
+  color: #dc2626;
+  text-decoration: line-through;
+  background-color: #fee2e2;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.vt-ins {
+  color: #16a34a;
+  background-color: #dcfce7;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.vt-arrow {
+  color: #9ca3af;
+  margin: 0 4px;
+}
+
+.vt-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.vt-accept, .vt-reject {
+  border: none;
+  background: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.1s ease;
+}
+
+.vt-accept {
+  color: #16a34a;
+}
+.vt-accept:hover {
+  background-color: #dcfce7;
+}
+
+.vt-reject {
+  color: #dc2626;
+}
+.vt-reject:hover {
+  background-color: #fee2e2;
+}
+
+/* Resolved states */
+.vt-diff-item.vt-accepted {
+  opacity: 0.5;
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.vt-diff-item.vt-rejected {
+  opacity: 0.5;
+  background-color: #fef2f2;
+  border-color: #fecaca;
+}
+
+/* Bulk actions */
+.vt-bulk-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.vt-accept-all, .vt-reject-all {
+  flex: 1;
+  border: 1px solid #d1d5db;
+  background-color: #ffffff;
+  border-radius: 6px;
+  padding: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.vt-accept-all {
+  color: #16a34a;
+  border-color: #bbf7d0;
+}
+.vt-accept-all:hover {
+  background-color: #f0fdf4;
+}
+
+.vt-reject-all {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+.vt-reject-all:hover {
+  background-color: #fef2f2;
+}
+
+/* Status messages */
+.vt-status {
+  font-size: 12px;
+  text-align: center;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.vt-error {
+  color: #dc2626;
+}
+
+.vt-offline {
+  color: #b45309;
+}
