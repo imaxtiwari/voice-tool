@@ -1,6 +1,22 @@
 {
   "manifest_version": 3,
   "name": "Voice Tool",
-  "version": "1.0.0",
-  "description": "Personal Gmail writing tool"
+  "version": "0.1.0",
+  "description": "Make this sound like the best version of me.",
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": [
+    "https://mail.google.com/*",
+    "http://localhost:8433/*"
+  ],
+  "content_scripts": [{
+    "matches": ["https://mail.google.com/*"],
+    "js": ["sidecar_client.js", "edit_logger.js", "diff_renderer.js", "panel.js", "content.js"],
+    "css": ["panel.css"],
+    "run_at": "document_idle"
+  }],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
 }
