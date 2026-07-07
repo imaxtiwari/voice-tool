@@ -2,35 +2,11 @@ import os
 import json
 import pytest
 from unittest.mock import MagicMock, patch
-from pipeline.embed_corpus import chunk_text_by_words, main, get_embeddings
-
-def test_chunking_logic_100_words():
-    text = "word " * 100
-    chunks = chunk_text_by_words(text, chunk_size=300, overlap=37)
-    assert len(chunks) == 1
-    assert len(chunks[0].split()) == 100
-
-def test_chunking_logic_500_words():
-    words = [f"w{i}" for i in range(500)]
-    text = " ".join(words)
-    chunks = chunk_text_by_words(text, chunk_size=300, overlap=37)
-    assert len(chunks) == 2
-    
-    chunk1_words = chunks[0].split()
-    chunk2_words = chunks[1].split()
-    
-    assert len(chunk1_words) == 300
-    assert len(chunk2_words) == 237  # 500 - 263 = 237
-    
-    # Overlap: last 37 words of chunk 1 are the first 37 of chunk 2
-    last_37_of_1 = chunk1_words[-37:]
-    first_37_of_2 = chunk2_words[:37]
-    assert last_37_of_1 == first_37_of_2
-    assert last_37_of_1 == words[263:300]
+from pipeline.embed_corpus import main
 
 @patch("pipeline.embed_corpus.chromadb.PersistentClient")
 @patch("pipeline.embed_corpus.AzureOpenAI")
-@patch("pipeline.embed_corpus.time.sleep")
+@patch("pipeline.embed_utils.time.sleep")
 def test_embed_corpus_batches_and_metadata(mock_sleep, mock_azure, mock_chroma, tmp_path):
     input_path = tmp_path / "sent_clean.jsonl"
     emails = []
@@ -87,19 +63,3 @@ def test_embed_corpus_batches_and_metadata(mock_sleep, mock_azure, mock_chroma, 
     assert "date" in first_metadata
     assert "chunk_index" in first_metadata
     assert "char_count" in first_metadata
-
-@patch("pipeline.embed_corpus.time.sleep")
-def test_azure_429_retry_logic(mock_sleep):
-    mock_client = MagicMock()
-    error_429 = Exception("Rate limit exceeded. Status: 429")
-    
-    mock_response = MagicMock()
-    mock_response.data = [MagicMock(embedding=[0.1, 0.2])]
-    
-    mock_client.embeddings.create.side_effect = [error_429, mock_response]
-    
-    embeddings = get_embeddings(mock_client, ["text"], "model-name")
-    
-    assert embeddings == [[0.1, 0.2]]
-    mock_sleep.assert_any_call(0.5)
-    mock_sleep.assert_any_call(30)

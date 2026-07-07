@@ -7,79 +7,12 @@ embeds them using Azure OpenAI, and stores them in ChromaDB.
 import os
 import sys
 import json
-import time
 import chromadb
 from dotenv import load_dotenv
 from openai import AzureOpenAI
+from pipeline.embed_utils import chunk_text, embed_batch, batch_add_to_chroma
 
 INPUT_PATH = "pipeline/data/sent_clean.jsonl"
-
-def chunk_text_by_words(text, chunk_size=300, overlap=37):
-    """
-    Chunks text by words.
-    Target chunk size: chunk_size.
-    Overlap: overlap.
-    """
-    words = text.split()
-    if not words:
-        return []
-    if len(words) <= chunk_size:
-        return [" ".join(words)]
-        
-    chunks = []
-    start = 0
-    while start < len(words):
-        end = start + chunk_size
-        chunk = words[start:end]
-        chunks.append(" ".join(chunk))
-        if end >= len(words):
-            break
-        start = end - overlap
-        if start >= end:
-            start = end - 1
-    return chunks
-
-def get_embeddings(client, texts, model_name):
-    """
-    Call Azure OpenAI embedding API with rate limiting and 429 retry logic.
-    """
-    # Sleep 0.5s before every Azure call as specified
-    time.sleep(0.5)
-    try:
-        response = client.embeddings.create(input=texts, model=model_name)
-        return [item.embedding for item in response.data]
-    except Exception as e:
-        is_429 = False
-        if hasattr(e, "status_code") and e.status_code == 429:
-            is_429 = True
-        elif "429" in str(e) or "rate limit" in str(e).lower():
-            is_429 = True
-            
-        if is_429:
-            sys.stderr.write("Azure OpenAI Rate Limit (429) hit. Waiting 30s to retry once...\n")
-            time.sleep(30)
-            try:
-                response = client.embeddings.create(input=texts, model=model_name)
-                return [item.embedding for item in response.data]
-            except Exception as retry_e:
-                sys.stderr.write(f"Azure OpenAI Rate Limit retry failed: {retry_e}\n")
-                return None
-        else:
-            sys.stderr.write(f"Azure OpenAI Error: {e}\n")
-            return None
-
-def add_to_chroma(collection, chunks):
-    """Adds a list of chunks to the ChromaDB collection."""
-    ids = [c["id"] for c in chunks]
-    embeddings = [c["embedding"] for c in chunks]
-    documents = [c["document"] for c in chunks]
-    metadatas = [c["metadata"] for c in chunks]
-    collection.add(
-        ids=ids,
-        embeddings=embeddings,
-        documents=documents,
-        metadatas=metadatas
-    )
 
 def main():
     load_dotenv()
@@ -128,10 +61,7 @@ def main():
         api_version="2023-05-15"
     )
     
-    pending_chunks = []
-    embedded_chunks = []
-    total_chunks_generated = 0
-    total_chunks_added = 0
+    all_chunks = []
     email_count = 0
     
     with open(INPUT_PATH, "r", encoding="utf-8") as f:
@@ -148,69 +78,40 @@ def main():
             date = email_data.get("date", "")
             body = email_data.get("body", "")
             
-            # Chunk the body (approx 300 words per chunk with 37 words overlap)
-            chunks = chunk_text_by_words(body, chunk_size=300, overlap=37)
+            # Chunk the body (target 300 words, 37 words overlap)
+            chunks = chunk_text(body, target_words=300, overlap_words=37)
             
-            for chunk_idx, chunk_text in enumerate(chunks):
+            for chunk_idx, chunk_str in enumerate(chunks):
                 chunk_item = {
                     "id": f"{email_count - 1}_{chunk_idx}",
-                    "document": chunk_text,
+                    "document": chunk_str,
                     "metadata": {
                         "subject": subject,
                         "date": date,
                         "chunk_index": chunk_idx,
-                        "char_count": len(chunk_text)
+                        "char_count": len(chunk_str)
                     }
                 }
-                pending_chunks.append(chunk_item)
-                total_chunks_generated += 1
-                
-            # Process pending chunks when we have at least 20
-            while len(pending_chunks) >= 20:
-                batch = pending_chunks[:20]
-                pending_chunks = pending_chunks[20:]
-                
-                batch_texts = [c["document"] for c in batch]
-                embeddings = get_embeddings(openai_client, batch_texts, deployment_name)
-                
-                if embeddings:
-                    for item, emb in zip(batch, embeddings):
-                        item["embedding"] = emb
-                        embedded_chunks.append(item)
-                else:
-                    sys.stderr.write(f"Skipping batch of {len(batch)} chunks due to embedding error.\n")
-                    
-            # Add to ChromaDB when we have at least 100 embedded chunks
-            while len(embedded_chunks) >= 100:
-                batch_to_add = embedded_chunks[:100]
-                embedded_chunks = embedded_chunks[100:]
-                add_to_chroma(collection, batch_to_add)
-                total_chunks_added += len(batch_to_add)
+                all_chunks.append(chunk_item)
                 
             if email_count % 50 == 0:
-                print(f"Embedded {email_count}/{total_emails} emails ({total_chunks_added} chunks total so far)...")
+                print(f"Embedded {email_count}/{total_emails} emails ({len(all_chunks)} chunks total so far)...")
                 
-    # Process remaining pending chunks
-    while pending_chunks:
-        batch = pending_chunks[:20]
-        pending_chunks = pending_chunks[20:]
-        
-        batch_texts = [c["document"] for c in batch]
-        embeddings = get_embeddings(openai_client, batch_texts, deployment_name)
-        
-        if embeddings:
-            for item, emb in zip(batch, embeddings):
-                item["embedding"] = emb
-                embedded_chunks.append(item)
-        else:
-            sys.stderr.write(f"Skipping final batch of {len(batch)} chunks due to embedding error.\n")
-            
-    # Add remaining embedded chunks
-    if embedded_chunks:
-        add_to_chroma(collection, embedded_chunks)
-        total_chunks_added += len(embedded_chunks)
-        
-    print(f"Done. Embedded {email_count} emails, {total_chunks_added} chunks into my_voice collection.")
+    # Now embed all chunks in batches
+    texts_to_embed = [c["document"] for c in all_chunks]
+    embeddings = embed_batch(texts_to_embed, openai_client, deployment_name)
+    
+    # Add to ChromaDB in batches
+    ids = [c["id"] for c in all_chunks]
+    documents = [c["document"] for c in all_chunks]
+    metadatas = [c["metadata"] for c in all_chunks]
+    
+    batch_add_to_chroma(collection, ids, documents, embeddings, metadatas, batch_size=100)
+    
+    # Total successfully added chunks
+    added_chunks_count = sum(1 for emb in embeddings if emb is not None)
+    
+    print(f"Done. Embedded {email_count} emails, {added_chunks_count} chunks into my_voice collection.")
     print(f"ChromaDB path: {chroma_path}")
 
 if __name__ == "__main__":
