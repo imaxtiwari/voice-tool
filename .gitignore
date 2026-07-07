@@ -3,7 +3,6 @@ sidecar/db/edit_log.db
 pipeline/data/sent_clean.jsonl
 pipeline/data/finetune_upload.jsonl
 pipeline/data/raw_ceo_docs/
-pipeline/data/ft_version_log.json
 pycache/
 *.pyc
 .DS_Store
