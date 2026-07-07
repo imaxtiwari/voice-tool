@@ -9,8 +9,18 @@ from sidecar.main import app
 
 client = TestClient(app)
 
-def test_rewrite_valid_request():
+from unittest.mock import patch
+
+@patch("sidecar.rewrite.route_rewrite")
+@patch("sidecar.rewrite.retrieve")
+def test_rewrite_valid_request(mock_retrieve, mock_route_rewrite):
     """Verifies that a valid POST /rewrite request returns HTTP 200 and echoes text."""
+    mock_route_rewrite.return_value = {
+        "rewritten_text": "Hello world email",
+        "model_used": "stub"
+    }
+    mock_retrieve.return_value = []
+
     payload = {
         "text": "Hello world email",
         "de_ai_level": 50,
@@ -22,7 +32,8 @@ def test_rewrite_valid_request():
     data = response.json()
     assert data["rewritten_text"] == "Hello world email"
     assert data["model_used"] == "stub"
-    assert data["diff"] == []
+    assert len(data["diff"]) == 1
+    assert data["diff"][0]["type"] == "equal"
     assert data["retrieval_confidence"] == 0.0
 
 def test_rewrite_empty_text():
