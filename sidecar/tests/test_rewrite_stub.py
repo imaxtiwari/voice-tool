@@ -68,3 +68,32 @@ def test_rewrite_invalid_mode():
     }
     response = client.post("/rewrite", json=payload)
     assert response.status_code == 422
+
+def test_log_edit_valid_request():
+    """Verifies that a valid POST /log-edit request returns HTTP 200 and logged: true."""
+    payload = {
+        "original_seg": "original text",
+        "proposed_seg": "proposed text",
+        "accepted": True,
+        "de_ai_level": 50,
+        "voice_level": 75,
+        "mode": "my_voice",
+        "model_used": "ft"
+    }
+    response = client.post("/log-edit", json=payload)
+    assert response.status_code == 200
+    assert response.json() == {"logged": True}
+
+def test_log_edit_validation_error():
+    """Verifies that an invalid POST /log-edit request returns HTTP 422 validation error."""
+    payload = {
+        "original_seg": "original text",
+        "proposed_seg": "proposed text",
+        "accepted": True,
+        "de_ai_level": 101,  # out of bounds
+        "voice_level": 75,
+        "mode": "my_voice",
+        "model_used": "ft"
+    }
+    response = client.post("/log-edit", json=payload)
+    assert response.status_code == 422
