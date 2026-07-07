@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+chromadb
+openai
+python-dotenv
+beautifulsoup4
+requests
+pdfminer.six
+mailbox
+bleach
+difflib

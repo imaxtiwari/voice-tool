@@ -1,0 +1,1 @@
+"""Clean sent emails module."""
